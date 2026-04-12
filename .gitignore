@@ -1,0 +1,5 @@
+# Claude Code workspace settings (developer-specific, not part of the plugin)
+.claude/
+
+# gstack build tool metadata
+.gstack/
