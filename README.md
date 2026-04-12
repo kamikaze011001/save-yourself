@@ -21,8 +21,22 @@ Run it once at project start. Leave the project hardened.
 
 ## Install
 
+**Step 1** — Add the marketplace (one-time):
+
 ```bash
-claude plugin install save-yourself
+/plugin marketplace add kamikaze011001/save-yourself
+```
+
+**Step 2** — Install the plugin:
+
+```bash
+/plugin install save-yourself@kamikaze011001
+```
+
+To install for your whole team (checked into the repo):
+
+```bash
+/plugin install save-yourself@kamikaze011001 --scope project
 ```
 
 ## Usage
@@ -48,6 +62,10 @@ Python and Java are deferred to v2.
 
 Everything else (dep upgrades, secret removal, git history rewriting) requires your
 explicit action — with exact commands provided.
+
+## References
+
+Built using the threat model and security practices from the [Claude Code Mastery course](https://course.shipwithai.io/en/claude-code/phase-02-security/01-threat-model/) by ShipWithAI.
 
 ## License
 
