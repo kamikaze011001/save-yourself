@@ -1,5 +1,8 @@
 {
   "name": "kamikaze011001",
+  "owner": {
+    "name": "kamikaze011001"
+  },
   "metadata": {
     "description": "Security bootstrapper for Claude Code projects"
   },
