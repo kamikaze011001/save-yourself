@@ -245,10 +245,12 @@ find . -maxdepth 2 -name "package.json" ! -path "*/node_modules/*"
 ```
 Cap at 20. If more: "Scope limited to 20 of N packages. Run `npm audit` in remaining packages manually."
 
-For each:
+For each `<dir>` (the directory containing the `package.json`):
 ```bash
-npm audit --json 2>/dev/null
+npm audit --prefix <dir> --json 2>/dev/null
 ```
+
+Never `cd` into the directory — use `--prefix` so the shell working directory stays at the project root throughout.
 
 Parse — detect format first:
 ```
