@@ -1,0 +1,20 @@
+{
+  "name": "kamikaze011001",
+  "metadata": {
+    "description": "Security bootstrapper for Claude Code projects"
+  },
+  "plugins": [
+    {
+      "name": "save-yourself",
+      "source": "./",
+      "description": "One-command security bootstrapper. Hardens .env handling, scans for credential leaks and hardcoded secrets, audits dependencies (Node, Go, Rust), and optionally generates a GitHub Actions CI workflow and CLAUDE.md security status block.",
+      "version": "0.1.0",
+      "author": {
+        "name": "kamikaze011001"
+      },
+      "repository": "https://github.com/kamikaze011001/save-yourself",
+      "license": "MIT",
+      "keywords": ["claude-code", "security", "credentials", "env", "audit", "dependencies"]
+    }
+  ]
+}
