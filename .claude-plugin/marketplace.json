@@ -10,8 +10,8 @@
     {
       "name": "save-yourself",
       "source": "./",
-      "description": "One-command security bootstrapper. Hardens .env handling, scans for credential leaks and hardcoded secrets, audits dependencies (Node, Go, Rust), and optionally generates a GitHub Actions CI workflow and CLAUDE.md security status block.",
-      "version": "0.1.0",
+      "description": "One-command security bootstrapper. Hardens .env handling, scans for credential leaks and hardcoded secrets, audits dependencies (Node, Go, Rust, Python, Java), installs a gitleaks pre-commit hook (Guardian Mode), wires up Claude Code real-time secret scanning, and optionally generates a GitHub Actions CI workflow and CLAUDE.md security status block.",
+      "version": "0.2.0",
       "author": {
         "name": "kamikaze011001"
       },

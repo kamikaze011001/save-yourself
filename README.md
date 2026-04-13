@@ -7,7 +7,7 @@ Run it once at project start. Leave the project hardened.
 ## What it does
 
 1. **Repo visibility check** — detects public repos and escalates severity for all findings
-2. **Stack detection** — Node.js, Go, Rust (checks root + monorepo subpackages)
+2. **Stack detection** — Node.js, Go, Rust, Python, Java (checks root + monorepo subpackages)
 3. **.env protection suite:**
    - Adds `.env` to `.gitignore` automatically
    - Warns if `.env` is currently tracked by git
@@ -15,9 +15,11 @@ Run it once at project start. Leave the project hardened.
    - Scans tracked files for hardcoded secrets (API keys, tokens, passwords)
    - Creates or merges `.env.example`
 4. **Credential file scanner** — flags tracked `.npmrc`, GCP service account keys, Docker configs, `.pem`/`.key` files
-5. **Dependency audit** — `npm audit`, `govulncheck`, `cargo audit` with unified output
+5. **Dependency audit** — `npm audit`, `govulncheck`, `cargo audit`, `pip-audit`, `osv-scanner` with unified output
 6. **GitHub Actions workflow** (opt-in) — CI that runs all checks on every PR
 7. **CLAUDE.md security status** (opt-in) — so future sessions inherit the security context
+8. **Guardian Mode** (opt-in) — gitleaks pre-commit hook that blocks commits containing secrets
+9. **Claude Code Defense Layer** (opt-in) — real-time secret scanning in Write/Edit/Bash calls via CC PreToolUse hooks
 
 ## Install
 
@@ -47,18 +49,20 @@ To install for your whole team (checked into the repo):
 
 Run before each release.
 
-## Supported stacks (v1)
+## Supported stacks (v0.2)
 
 - Node.js / TypeScript (`npm audit`)
 - Go (`govulncheck`)
 - Rust (`cargo audit`)
-
-Python and Java are deferred to v2.
+- Python (`pip-audit`)
+- Java / Maven / Gradle (`osv-scanner`)
 
 ## What it fixes automatically
 
 - Adds `.env` and variants to `.gitignore`
 - Creates or merges `.env.example`
+- Installs gitleaks pre-commit hook (Guardian Mode, opt-in)
+- Wires up Claude Code real-time secret scanning (CC Defense Layer, opt-in)
 
 Everything else (dep upgrades, secret removal, git history rewriting) requires your
 explicit action — with exact commands provided.

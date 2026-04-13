@@ -28,47 +28,83 @@ Test it on 3 real projects. If it's reliable, wrap in Go for portability.
 
 ## P2: Python + Java Language Support
 
-**What:** Add `pip-audit` (Python) and OWASP Dependency Check (Java) to Phase 3.
-- Python: auto-detect via `pyproject.toml`, `requirements.txt`, `Pipfile`
-- Java: auto-detect via `pom.xml`, `build.gradle`
-
-**Why:** Python is the most common language for scripts with leaked secrets.
-Java is the top enterprise language. These are the two biggest v1 coverage gaps.
-
-**Pros:** Completes the common language matrix. pip-audit is excellent.
-**Cons:** Java audit story is messy (mvn vs gradle divergence, OWASP plugin setup).
-Recommend shipping Python first (S effort), Java second (M effort).
-
-**Effort:** S for Python only → M for Python + Java (CC+gstack)
-
-**Where to start:** `pip install pip-audit && pip-audit --json` — it's that simple.
-Add Python detection to Phase 1 (stat pyproject.toml / requirements.txt).
-
-**Depends on:** v1 ships with Node+Go+Rust.
+**Status:** Resolved in v0.2 — pip-audit (Python) + osv-scanner (Java) shipped in Phase 3.
 
 ---
 
 ## P2: Guardian Mode — Pre-Commit Hooks
 
-**What:** After running /save-yourself, offer to install a pre-commit hook that runs
-on every `git commit`:
-- Check if .env (or any .env.*) is staged → block commit + warn
-- Check if new deps added since last audit have known critical vulns → warn
+**Status:** Resolved in v0.2 — shipped as CP5 using gitleaks. Uninstall commands
+included inline per v0.2 CEO review decision.
 
-**Why:** The current skill is a one-shot check. Guardian Mode makes protection
-continuous — catches problems at the moment they're introduced.
+---
 
-**Pros:** Persistent protection. Genuinely novel vs. existing Claude Code skills.
-No equivalent in the ecosystem.
+## P3: gitleaks Allowlist Support for CP5
 
-**Cons:** Pre-commit hooks are opinionated — some teams disable them. Harder to
-test and uninstall cleanly. Must generate an uninstall command alongside the install.
+**What:** Allow teams to create a `.gitleaks.toml` allowlist to whitelist known false
+positives from the Guardian Mode pre-commit hook. Example: base64-encoded test fixtures
+or placeholder values that pattern-match as secrets.
 
-**Effort:** L (human) → M (CC+gstack)
+**Why:** Without an allowlist, the only escape hatch is `git commit --no-verify`, which
+bypasses ALL hooks — not just gitleaks. False positives push developers toward disabling
+protection entirely.
 
-**Where to start:** The hook logic is simple bash. The hard part is the install/uninstall
-UX. Draft the hook first, then the install offer in Phase 6 (after CLAUDE.md offer).
+**Pros:** Reduces friction. gitleaks already supports `.gitleaks.toml` natively — this
+is just documenting the integration.
+**Cons:** Allowlists need maintenance. A misconfigured allowlist can suppress real findings.
 
-**Exposed via:** `--with-hooks` flag in v2, or as a separate offer at end of Phase 6.
+**Effort:** S (human) → S (CC+gstack)
 
-**Depends on:** v1 ships.
+**Where to start:** Add note in CP5 output: "To allowlist specific patterns, create
+`.gitleaks.toml`. See gitleaks configuration docs." Then in v0.3, offer to generate a
+starter `.gitleaks.toml` with common false positive rules.
+
+**Depends on:** v0.2 ships with CP5 Guardian Mode.
+
+---
+
+## P3: CP6 Per-File-Type Exclusions
+
+**What:** Allow users to configure which file types or paths are excluded from the CP6
+PreToolUse secret scanner. Example: skip `*.md`, `test/*`, `*.example`. Currently the
+only exclusion mechanism is the in-regex placeholder filter (`your_|example|xxx|...`).
+
+**Why:** Without per-file exclusions, the hook can block legitimate writes to test
+fixtures, documentation with code examples, or migration files with non-secret-looking
+values. Users who hit false positives must either edit the hook script manually or
+disable CP6 entirely — both are worse than a configured exclusion.
+
+**Pros:** Reduces false positive friction. gitleaks has allowlist support as a model.
+**Cons:** Adds configuration surface. A misconfigured exclusion list can suppress real findings.
+
+**Effort:** S (human) → S (CC+gstack)
+
+**Where to start:** Add an `EXCLUDED_PATHS` array at the top of
+`.claude/hooks/save-yourself-check.sh` (populated at install time or editable post-install).
+Check the target file path against the array before scanning content.
+
+**Depends on:** v0.2 ships with CP6 CC Defense Layer.
+
+---
+
+## P3: Conductor Pattern Smoke Test
+
+**What:** A minimal test script that runs the save-yourself skill against a fixture repo
+(known state) and verifies the output report matches expectations. Run before and after
+any SKILL.md refactor to confirm "zero behavior change."
+
+**Why:** Step 1 of the v0.2 conductor refactor claims zero behavior change, but without
+a test there's no way to catch silent regressions in the extraction. Every future
+refactor has the same risk.
+
+**Pros:** Protects every future refactor. Catches silent failures (wrong file referenced,
+missing section, broken `@references/` instruction).
+**Cons:** Requires a test fixture repo. Claude skill "testing" is inherently integration-level.
+
+**Effort:** M (human) → S (CC+gstack)
+
+**Where to start:** Create a `test/` directory with a minimal Node.js fixture repo
+(package.json + known-vulnerable lockfile). Run the skill, capture report output,
+assert on key lines (version, vuln count, stack detected).
+
+**Depends on:** v0.2 conductor refactor ships.
