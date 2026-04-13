@@ -50,9 +50,10 @@ Always note: "Note: pip-audit scanned the active Python environment."
 
 ```yaml
 - name: Python dependency audit
-  if: hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != ''
+  if: hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '' || hashFiles('setup.py') != ''
   run: |
     pip install --quiet pip-audit
+    pip install --quiet -r requirements.txt 2>/dev/null || pip install --quiet -e . 2>/dev/null || true
     pip-audit --format json | python3 -c "
     import json,sys
     data=json.load(sys.stdin)

@@ -160,9 +160,10 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Python dependency audit
-        if: hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != ''
+        if: hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '' || hashFiles('setup.py') != ''
         run: |
           pip install --quiet pip-audit
+          pip install --quiet -r requirements.txt 2>/dev/null || pip install --quiet -e . 2>/dev/null || true
           pip-audit --format json | python3 -c "
           import json,sys
           data=json.load(sys.stdin)
@@ -173,7 +174,7 @@ jobs:
           "
 
       - name: Java dependency scan (osv-scanner)
-        if: hashFiles('pom.xml') != '' || hashFiles('build.gradle') != ''
+        if: hashFiles('pom.xml') != '' || hashFiles('build.gradle') != '' || hashFiles('build.gradle.kts') != ''
         uses: google/osv-scanner-action@v1
         with:
           scan-args: |-
@@ -248,7 +249,7 @@ Read @references/cp6-cc-hooks.md and follow it completely.
 
 | Situation | Behavior |
 |---|---|
-| Empty repo (no commits) | Phase 2c: "No git history — skipping history checks." Continue. |
+| Empty repo (no commits) | Phase 2c: "No git history found — skipping history checks." Continue. |
 | No lockfile found | Phase 1: ask user which stack. Phase 3: skip undetected stacks. |
 | `package.json` but no lockfile | Phase 3: "Run `npm install` first." Skip npm audit. |
 | `govulncheck` not installed | Phase 3: skip with install instructions. |

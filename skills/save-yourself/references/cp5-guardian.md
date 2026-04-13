@@ -21,7 +21,7 @@ Stop CP5.
 
 If EXISTS:
 ```bash
-grep -q 'gitleaks' .git/hooks/pre-commit && echo "WIRED" || echo "NEEDS_APPEND"
+grep -q 'gitleaks protect' .git/hooks/pre-commit && echo "WIRED" || echo "NEEDS_APPEND"
 ```
 
 - WIRED → "gitleaks already in pre-commit hook. Skipping." Stop CP5.
@@ -92,7 +92,7 @@ To remove: Edit `.git/hooks/pre-commit` and delete the block between:
 ```
 If that was the only content: `rm .git/hooks/pre-commit`
 
-Note in Phase 4 [FIXED AUTOMATICALLY]:
+Tell the user (as part of the Phase 4 summary or as a final status note):
 ```
 + Guardian Mode: gitleaks pre-commit hook installed (.git/hooks/pre-commit)
 ```

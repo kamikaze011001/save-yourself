@@ -18,7 +18,7 @@ All notable changes to save-yourself are documented here.
   settings.json merge, uninstall instructions
 
 ### Changed
-- SKILL.md refactored to conductor pattern (~155 lines, was 463)
+- SKILL.md refactored to conductor pattern (~275 lines, was 463; the CP3 YAML is kept inline)
 - Phase 1 stack detection expanded to include Python and Java manifests
 - CP3 GitHub Actions workflow updated with Python (pip-audit) and Java (google/osv-scanner-action@v1) steps
 - `references/secret-patterns.md` now actually referenced from phase2-env.md (was orphaned in v0.1)
