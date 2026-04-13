@@ -159,6 +159,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      # Canonical version in references/phase3-python.md — keep in sync
       - name: Python dependency audit
         if: hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '' || hashFiles('setup.py') != ''
         run: |
@@ -173,6 +174,7 @@ jobs:
             sys.exit(1)
           "
 
+      # Canonical version in references/phase3-java.md — keep in sync
       - name: Java dependency scan (osv-scanner)
         if: hashFiles('pom.xml') != '' || hashFiles('build.gradle') != '' || hashFiles('build.gradle.kts') != ''
         uses: google/osv-scanner-action@v1

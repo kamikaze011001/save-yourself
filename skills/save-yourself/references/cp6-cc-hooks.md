@@ -42,6 +42,9 @@ case "$TOOL" in
        print(d.get('tool_input',{}).get('new_string',''))" 2>/dev/null)
     ;;
   Bash)
+    # Bash branch scans only .env redirect commands — not arbitrary command content (by design).
+    # Write/Edit scan file content directly; Bash commands run in a shell and can't be
+    # safely content-scanned without executing them.
     CMD=$(echo "$INPUT" | python3 -c \
       "import sys,json; d=json.load(sys.stdin); \
        print(d.get('tool_input',{}).get('command',''))" 2>/dev/null)
@@ -80,7 +83,7 @@ PYEOF
 # os.environ.get() is also immune to UnicodeDecodeError on binary content.
 
 if [ -n "$MATCH" ]; then
-  SAFE_MATCH=$(echo "$MATCH" | head -c 120)
+  SAFE_MATCH=$(echo "$MATCH" | head -c 120)  # 120 = up to 3 matches × 40 chars each, matching the safe[] cap above
   SAFE_MATCH="$SAFE_MATCH" python3 -c "
 import json, os
 match = os.environ.get('SAFE_MATCH', '').strip()
@@ -165,7 +168,7 @@ grep CLAUDE_PROJECT_DIR .claude/settings.json
 - `python3` required for JSON parsing + regex. If unavailable, script exits 0 silently
   (non-blocking degradation — do not break the workflow)
 - Same secret patterns as @references/secret-patterns.md for consistency
-  (update both files if changing the regex pattern)
+  (update both files if changing the regex pattern OR the exclusion filter list)
 - Matcher `"Write|Edit|Bash"` — pipe-separated, exact match (not regex)
 - `$CLAUDE_PROJECT_DIR` is set by Claude Code when running hooks (documented CC behavior).
   The hook path `"$CLAUDE_PROJECT_DIR"/.claude/hooks/save-yourself-check.sh` expands

@@ -53,24 +53,9 @@ fi
 ```
 
 Append to existing file (omit shebang, include block):
-```sh
-# === save-yourself: gitleaks secret scanner ===
-if command -v gitleaks >/dev/null 2>&1; then
-  gitleaks protect --staged --redact -v
-  EXIT_CODE=$?
-  if [ $EXIT_CODE -eq 1 ]; then
-    echo ""
-    echo "SECRET DETECTED: commit blocked by gitleaks."
-    echo "Remove the secret or move it to .env, then try again."
-    echo "(Use 'git commit --no-verify' to bypass if this is a false positive.)"
-    exit 1
-  elif [ $EXIT_CODE -gt 1 ]; then
-    echo "gitleaks exited with error (exit $EXIT_CODE) — commit not blocked."
-    echo "Check your gitleaks installation: gitleaks version"
-  fi
-fi
-# === end save-yourself ===
-```
+
+Append the same block as above — the `# === save-yourself: gitleaks secret scanner ===`
+through `# === end save-yourself ===` lines — but omit the `#!/bin/sh` shebang line.
 
 Make executable:
 ```bash

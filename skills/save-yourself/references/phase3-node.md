@@ -5,7 +5,7 @@ Narrate: "Running npm audit..."
 If `package.json` exists but no `package-lock.json`:
 "Run `npm install` first to generate a lockfile, then re-run `/save-yourself`." Skip.
 
-Monorepo: find all `package.json` files up to 2 levels deep, excluding `node_modules/`:
+Monorepo: find all `package.json` files up to 2 levels deep (matches Phase 1 stack detection depth in SKILL.md — update both if changing scan depth), excluding `node_modules/`:
 ```bash
 find . -maxdepth 2 -name "package.json" ! -path "*/node_modules/*"
 ```
