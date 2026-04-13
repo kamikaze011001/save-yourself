@@ -21,12 +21,15 @@ git show HEAD:.npmrc 2>/dev/null | grep -qi '_authToken='
 - Exists, no token: LOW (informational)
 
 **`docker-config.json` or `.docker/config.json`:**
+
+Use the path returned by `git ls-files` (either `docker-config.json` or `.docker/config.json`):
 ```bash
-git show HEAD:docker-config.json 2>/dev/null \
+DOCKER_CFG=$(git ls-files | grep -E '(docker-config\.json|\.docker/config\.json)' | head -1)
+git show HEAD:"$DOCKER_CFG" 2>/dev/null \
   | python3 -c "import sys,json; d=json.load(sys.stdin); print('HAS_AUTHS') if d.get('auths') else None" \
   2>/dev/null
 # python3 not available fallback:
-git show HEAD:docker-config.json 2>/dev/null | grep -q '"auths"' && echo "HAS_AUTHS"
+git show HEAD:"$DOCKER_CFG" 2>/dev/null | grep -q '"auths"' && echo "HAS_AUTHS"
 ```
 - `HAS_AUTHS`: HIGH
 - File exists, no `auths` key: MEDIUM

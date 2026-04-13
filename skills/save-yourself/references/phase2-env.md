@@ -3,11 +3,18 @@
 ## 2a. .gitignore coverage
 
 ```bash
-grep -qE '^\.env$' .gitignore 2>/dev/null || echo "MISSING"
+grep -qE '^/?\.env([[:space:]]|#|$)|^\.env\*' .gitignore 2>/dev/null || echo "MISSING"
 ```
 
-If missing: **auto-add without asking**. Append `.env`, `.env.local`, `.env.*.local` to `.gitignore`.
-Notify: "Added `.env` (and variants) to `.gitignore`."
+If missing: **auto-add without asking**. Append these lines to `.gitignore`:
+```
+.env
+.env.*
+!.env.example
+```
+This covers `.env`, `.env.local`, `.env.production`, `.env.staging`, `.env.development`, `.env.test`,
+and all other variants — while explicitly un-ignoring `.env.example`.
+Notify: "Added `.env` and `.env.*` to `.gitignore` (`.env.example` excluded)."
 
 ## 2b. Currently tracked
 

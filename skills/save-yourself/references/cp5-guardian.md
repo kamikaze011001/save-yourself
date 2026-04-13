@@ -25,7 +25,9 @@ grep -q 'gitleaks protect' .git/hooks/pre-commit && echo "WIRED" || echo "NEEDS_
 ```
 
 - WIRED → "gitleaks already in pre-commit hook. Skipping." Stop CP5.
-- NEEDS_APPEND → append the block below to the existing file.
+- NEEDS_APPEND → insert the block below into the existing file, BEFORE the final `exit`
+  statement (if any). Appending after a `exit $?` line would make the gitleaks block
+  dead code — it would never execute.
 
 If MISSING → create new file with shebang + block below.
 

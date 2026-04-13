@@ -53,7 +53,8 @@ Always note: "Note: pip-audit scanned the active Python environment."
   if: hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '' || hashFiles('setup.py') != ''
   run: |
     pip install --quiet pip-audit
-    pip install --quiet -r requirements.txt 2>/dev/null || pip install --quiet -e . 2>/dev/null || true
+    pip install --quiet -r requirements.txt 2>/dev/null || pip install --quiet -e . 2>/dev/null \
+      || echo "::warning::pip install failed — pip-audit may scan an incomplete environment"
     pip-audit --format json | python3 -c "
     import json,sys
     data=json.load(sys.stdin)
