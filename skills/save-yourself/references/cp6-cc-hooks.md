@@ -45,7 +45,7 @@ case "$TOOL" in
     CMD=$(echo "$INPUT" | python3 -c \
       "import sys,json; d=json.load(sys.stdin); \
        print(d.get('tool_input',{}).get('command',''))" 2>/dev/null)
-    if echo "$CMD" | grep -qE '\.env[[:space:]]*(>|>>)'; then
+    if echo "$CMD" | grep -qE '(>|>>)[[:space:]]*\.env([[:space:]]|$)'; then
       python3 -c "import json; print(json.dumps({
         'hookSpecificOutput': {
           'hookEventName': 'PreToolUse',
@@ -65,8 +65,12 @@ import re, os
 content = os.environ.get('SAFE_CONTENT', '')
 pattern = re.compile(r'(?i)(api[_-]?key|secret|token|password|passwd|pwd)\s*=\s*\S+')
 placeholders = re.compile(r'(?i)(example|placeholder|changeme|your_|xxx|<|>|\$\{|\$\()')
-matches = [m.group(0) for m in pattern.finditer(content)
-           if not placeholders.search(m.group(0))]
+matches = []
+for m in pattern.finditer(content):
+    parts = m.group(0).split('=', 1)
+    value = parts[1] if len(parts) > 1 else ''
+    if not placeholders.search(value):
+        matches.append(m.group(0))
 safe = [(m[:40] + '...') if len(m) > 40 else m for m in matches[:3]]
 print('\n'.join(safe))
 PYEOF
@@ -111,7 +115,12 @@ path = ".claude/settings.json"
 try:
     with open(path) as f:
         settings = json.load(f)
-except (FileNotFoundError, json.JSONDecodeError):
+except FileNotFoundError:
+    settings = {}
+except json.JSONDecodeError:
+    import shutil
+    shutil.copy(path, path + '.bak')
+    print(f'Warning: {path} was malformed JSON. Backed up to {path}.bak and recreated.')
     settings = {}
 
 hooks = settings.setdefault("hooks", {})
@@ -166,7 +175,7 @@ To remove:
 Edit `.claude/settings.json` and delete the hook entry containing `"save-yourself-check.sh"`,
 then delete `.claude/hooks/save-yourself-check.sh`
 
-Note in Phase 4 [FIXED AUTOMATICALLY]:
+Tell the user (as part of the Phase 4 summary or as a final status note):
 ```
 + CC Defense Layer: PreToolUse hook installed (.claude/hooks/ + .claude/settings.json)
 ```

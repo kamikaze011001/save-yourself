@@ -16,7 +16,9 @@ If `command not found`:
   Linux/other: https://github.com/google/osv-scanner/releases"
 Skip this stack.
 
-If osv-scanner exits non-zero or output is not valid JSON:
+Capture stdout. If stdout is valid JSON, parse and report findings regardless of exit code
+(osv-scanner exits 1 when vulnerabilities are found — this is expected).
+Only skip if stdout is empty or not valid JSON:
 Report: "osv-scanner returned unexpected output — run manually: `osv-scanner .`"
 Skip this stack (continue to next).
 
@@ -57,7 +59,7 @@ For full transitive coverage: run `mvn dependency:tree` or `gradle dependencies`
 
 ```yaml
 - name: Java dependency scan (osv-scanner)
-  if: hashFiles('pom.xml') != '' || hashFiles('build.gradle') != ''
+  if: hashFiles('pom.xml') != '' || hashFiles('build.gradle') != '' || hashFiles('build.gradle.kts') != ''
   uses: google/osv-scanner-action@v1
   with:
     scan-args: |-
