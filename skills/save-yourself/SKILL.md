@@ -164,25 +164,55 @@ Never dispatch an agent for a stack marked **skip** — doing so wastes a contex
 
 ---
 
-## Phase 3: Dependency Audit
+## Phase 3: Dependency Audit (Parallel Agent Dispatch)
 
-Narrate: "Running dependency audit..."
+⛔ HARD GATE: Do NOT dispatch agents until ALL of the following are complete:
+  - Phase 0 (PUBLIC_REPO flag is set)
+  - Phase 1 (stack list and manifest paths are finalized)
+  - Phase 2 (.env findings are recorded in the session)
+  - CP2 (credential findings are recorded in the session)
+  - Pre-Phase 3 tool check (ready-stack list is finalized)
 
-For each detected stack, read the corresponding reference and follow it:
+Narrate: "Dispatching parallel dependency audit agents for: [list ready stacks]..."
 
-| Stack   | Reference                    | Tool        |
-|---------|------------------------------|-------------|
-| Node.js | @references/phase3-node.md   | npm audit   |
-| Go      | @references/phase3-go.md     | govulncheck |
-| Rust    | @references/phase3-rust.md   | cargo audit |
-| Python  | @references/phase3-python.md | pip-audit   |
-| Java    | @references/phase3-java.md   | osv-scanner |
+For each stack in the **ready** list, construct a dispatch prompt using this template:
 
-Read only the files for detected stacks. Skip the rest.
+```
+Read @references/agents/<stack>-agent.md and follow it completely.
+
+Context:
+- PUBLIC_REPO: <value from Phase 0>
+- Manifests: <list of manifest paths for this stack from Phase 1>
+- Output file: .claude/save-yourself-audit-<stack>.json
+```
+
+Dispatch ALL ready-stack agents in a **single message** (multiple Agent tool calls at once)
+so they run concurrently. Do NOT dispatch them sequentially.
+
+Wait for all agents to complete before proceeding to Phase 4.
 
 ---
 
 ## Phase 4: Summary Report
+
+Narrate: "Merging audit results..."
+
+For each stack dispatched in Phase 3, collect its output:
+
+1. Check if `.claude/save-yourself-audit-<stack>.json` exists.
+   - **Missing**: report "⚠️ scan incomplete for <stack> — agent produced no output" in the summary.
+2. Parse the JSON file:
+   - `"status": "skip"` → include `skip_reason` in summary. No findings for this stack.
+   - `"status": "error"` → include `error` value in summary. No findings for this stack.
+   - `"status": "ok"` → collect `findings` array. Findings are already CP1-escalated by the agent — do NOT re-apply escalation.
+3. Include `coverage_note` from each agent's output as a sub-note under the stack heading in the report.
+
+After collecting all Phase 3 findings, combine with Phase 2 and CP2 findings recorded in the main session.
+
+Cleanup temp files:
+```bash
+rm -f .claude/save-yourself-audit-*.json
+```
 
 Read @references/summary-format.md for the report template and fill it in.
 
