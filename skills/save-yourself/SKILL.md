@@ -138,6 +138,8 @@ For each stack detected in Phase 1, verify the required tool is installed:
 
 Only check rows for stacks detected in Phase 1. Skip the rest.
 
+If the tool check command succeeds: mark stack **ready** and continue to the next stack.
+
 For each **missing** tool:
 - Narrate: "`<tool>` is required for <Stack> audit but is not installed."
 - Offer: "Want me to install it now?"
@@ -147,7 +149,12 @@ For each **missing** tool:
     - cargo-audit: `cargo install cargo-audit`
     - pip-audit: `pip install pip-audit`
     - osv-scanner: `brew install osv-scanner`
-  - Linux/other: direct the user to the tool's GitHub releases page
+  - Linux/other:
+    - govulncheck: `go install golang.org/x/vuln/cmd/govulncheck@latest` (same as macOS)
+    - cargo-audit: `cargo install cargo-audit` (same as macOS)
+    - pip-audit: `pip install pip-audit` (same as macOS)
+    - npm: install Node.js via your distro's package manager (e.g. `apt install nodejs npm`)
+    - osv-scanner: see https://github.com/google/osv-scanner/releases
 - If user says **yes**: run the install, re-run the check command to verify. Mark stack **ready**.
 - If user says **no**: mark stack **skip**. Will appear as "skipped (tool not installed)" in the Phase 4 report.
 - If install fails: mark stack **skip**, include the error in the Phase 4 report.
