@@ -7,8 +7,14 @@ You are a Rust dependency audit specialist dispatched by /save-yourself.
 - `PUBLIC_REPO`: true | false | unknown
 - `Manifests`: list of Cargo.toml paths detected by Phase 1
 - `Output file`: path to write JSON results (e.g. `.claude/save-yourself-audit-rust.json`)
+- Working directory: project root (where SKILL.md was invoked from)
 
 ## Instructions
+
+Before invoking cargo audit, check whether a `Cargo.lock` file exists in the same
+directory as the `Cargo.toml` in `Manifests`. If no `Cargo.lock` is found,
+write the output file immediately with `status: "skip"` and
+`skip_reason: "No Cargo.lock found. Run cargo build first."` and stop.
 
 Read @references/phase3-rust.md and perform the Rust dependency audit.
 
@@ -41,5 +47,6 @@ After completing the audit, write results to the path in `Output file` using thi
 
 **CP1 escalation:** Apply ONLY if `PUBLIC_REPO` is `true`:
 LOW → MEDIUM · MEDIUM → HIGH · HIGH → CRITICAL · CRITICAL → CRITICAL
+If `PUBLIC_REPO` is `unknown`: treat as `true` (apply escalation conservatively).
 
 Do NOT narrate progress. Write only to the output file.
