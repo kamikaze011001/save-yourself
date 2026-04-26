@@ -7,7 +7,7 @@ description: >
   protection. Also trigger when a user says "secure my project", "check for
   security issues", or "am I leaking credentials".
 metadata:
-  version: "0.2.0"
+  version: "0.3.0"
   author: "kamikaze011001"
 ---
 
