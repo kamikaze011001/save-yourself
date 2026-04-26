@@ -12,7 +12,7 @@ All notable changes to save-yourself are documented here.
 - Phase 3 refactored to parallel agent dispatch: one Agent per detected stack runs concurrently, reducing wall-clock time on multi-stack repos
 - Phase 4 updated to merge agent JSON output files, read `coverage_note` per stack, and clean up temp files after report generation
 - SKILL.md: added "When NOT to use" guard, DOT flow diagram, and hard gate before Phase 3 dispatch
-- `references/phase3-java.md`: replaced direct `osv-scanner` scan with two-step CycloneDX SBOM approach (`mvn cyclonedx:makeBom` → `osv-scanner --sbom`); falls back to direct scan if SBOM generation fails; always reports transitive coverage level in output
+- `references/phase3-java.md`: replaced direct `osv-scanner` scan with two-step CycloneDX SBOM approach (`mvn org.cyclonedx:cyclonedx-maven-plugin:2.7.9:makeBom` → `osv-scanner --sbom`); falls back to direct scan if SBOM generation fails; always reports transitive coverage level in output
 
 ### Fixed
 - Java audit no longer silently loses transitive dependencies when Maven is available in the environment
