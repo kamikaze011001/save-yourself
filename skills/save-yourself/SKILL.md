@@ -7,7 +7,7 @@ description: >
   protection. Also trigger when a user says "secure my project", "check for
   security issues", or "am I leaking credentials".
 metadata:
-  version: "0.2.0"
+  version: "0.3.0"
   author: "kamikaze011001"
 ---
 
@@ -18,6 +18,42 @@ One command. Leave the project hardened.
 Before starting, tell the user: "Running /save-yourself security scan. This will
 check your .env setup, scan for leaked credentials, and audit dependencies. I'll
 narrate each step as I go."
+
+## When NOT to use this skill
+
+- User only wants to check .env: run Phase 2 only, skip Phase 3 entirely.
+- No dependency manifests found (no lockfiles, no package files): skip Phase 3. Tell the user: "No dependency manifests found — running env/credential checks only."
+- Read-only filesystem: warn upfront that CP5/CP6 hook installation will fail.
+
+---
+
+## Flow
+
+```dot
+digraph save_yourself {
+  "Phase 0: Repo visibility"    [shape=box];
+  "Phase 1: Stack detection"    [shape=box];
+  "Phase 2: .env protection"    [shape=box];
+  "CP2: Credential scanner"     [shape=box];
+  "Pre-Phase 3: Tool check"     [shape=box];
+  "Tools missing?"              [shape=diamond];
+  "Offer install"               [shape=box];
+  "Phase 3: Dispatch agents"    [shape=box];
+  "Phase 4: Merge + report"     [shape=box];
+  "CP3-CP6: Opt-in steps"       [shape=box];
+
+  "Phase 0: Repo visibility"  -> "Phase 1: Stack detection";
+  "Phase 1: Stack detection"  -> "Phase 2: .env protection";
+  "Phase 2: .env protection"  -> "CP2: Credential scanner";
+  "CP2: Credential scanner"   -> "Pre-Phase 3: Tool check";
+  "Pre-Phase 3: Tool check"   -> "Tools missing?";
+  "Tools missing?"            -> "Offer install"            [label="yes"];
+  "Tools missing?"            -> "Phase 3: Dispatch agents" [label="no / resolved"];
+  "Offer install"             -> "Phase 3: Dispatch agents";
+  "Phase 3: Dispatch agents"  -> "Phase 4: Merge + report";
+  "Phase 4: Merge + report"   -> "CP3-CP6: Opt-in steps";
+}
+```
 
 ---
 
@@ -86,27 +122,104 @@ Read @references/cp2-credentials.md and follow it completely.
 
 ---
 
-## Phase 3: Dependency Audit
+## Pre-Phase 3: Tool Availability Check
 
-Narrate: "Running dependency audit..."
+Narrate: "Checking required audit tools..."
 
-For each detected stack, read the corresponding reference and follow it:
+For each stack detected in Phase 1, verify the required tool is installed:
 
-| Stack   | Reference                    | Tool        |
-|---------|------------------------------|-------------|
-| Node.js | @references/phase3-node.md   | npm audit   |
-| Go      | @references/phase3-go.md     | govulncheck |
-| Rust    | @references/phase3-rust.md   | cargo audit |
-| Python  | @references/phase3-python.md | pip-audit   |
-| Java    | @references/phase3-java.md   | osv-scanner |
+| Stack  | Tool         | Check command            |
+|--------|--------------|--------------------------|
+| Node   | npm          | `which npm`              |
+| Go     | govulncheck  | `which govulncheck`      |
+| Rust   | cargo-audit  | `cargo audit --version`  |
+| Python | pip-audit    | `which pip-audit`        |
+| Java   | osv-scanner  | `which osv-scanner`      |
 
-Read only the files for detected stacks. Skip the rest.
+Only check rows for stacks detected in Phase 1. Skip the rest.
+
+If the tool check command succeeds: mark stack **ready** and continue to the next stack.
+
+For each **missing** tool:
+- Narrate: "`<tool>` is required for <Stack> audit but is not installed."
+- Offer: "Want me to install it now?"
+  - macOS install commands:
+    - npm: ships with Node.js — install Node.js via `brew install node`
+    - govulncheck: `go install golang.org/x/vuln/cmd/govulncheck@latest`
+    - cargo-audit: `cargo install cargo-audit`
+    - pip-audit: `pip install pip-audit`
+    - osv-scanner: `brew install osv-scanner`
+  - Linux/other:
+    - govulncheck: `go install golang.org/x/vuln/cmd/govulncheck@latest` (same as macOS)
+    - cargo-audit: `cargo install cargo-audit` (same as macOS)
+    - pip-audit: `pip install pip-audit` (same as macOS)
+    - npm: install Node.js via your distro's package manager (e.g. `apt install nodejs npm`)
+    - osv-scanner: see https://github.com/google/osv-scanner/releases
+- If user says **yes**: run the install, re-run the check command to verify. Mark stack **ready**.
+- If user says **no**: mark stack **skip**. Will appear as "skipped (tool not installed)" in the Phase 4 report.
+- If install fails: mark stack **skip**, include the error in the Phase 4 report.
+
+Only stacks marked **ready** are dispatched in Phase 3.
+Never dispatch an agent for a stack marked **skip** — doing so wastes a context window.
+
+---
+
+## Phase 3: Dependency Audit (Parallel Agent Dispatch)
+
+⛔ HARD GATE: Do NOT dispatch agents until ALL of the following are complete:
+  - Phase 0 (PUBLIC_REPO flag is set)
+  - Phase 1 (stack list and manifest paths are finalized)
+  - Phase 2 (.env findings are recorded in the session)
+  - CP2 (credential findings are recorded in the session)
+  - Pre-Phase 3 tool check (ready-stack list is finalized)
+
+Ensure the output directory exists before dispatch:
+```bash
+mkdir -p .claude
+```
+
+Narrate: "Dispatching parallel dependency audit agents for: [list ready stacks]..."
+
+For each stack in the **ready** list, construct a dispatch prompt using this template:
+
+```
+Read @references/agents/<stack>-agent.md and follow it completely.
+
+Context:
+- PUBLIC_REPO: <value from Phase 0>
+- Manifests: <list of manifest paths for this stack from Phase 1>
+- Output file: .claude/save-yourself-audit-<stack>.json
+```
+
+Dispatch ALL ready-stack agents in a **single message** (multiple Agent tool calls at once)
+so they run concurrently. Do NOT dispatch them sequentially.
+
+Wait for all agents to complete before proceeding to Phase 4.
 
 ---
 
 ## Phase 4: Summary Report
 
+Narrate: "Merging audit results..."
+
+For each stack dispatched in Phase 3, collect its output:
+
+1. Check if `.claude/save-yourself-audit-<stack>.json` exists.
+   - **Missing**: report "⚠️ scan incomplete for <stack> — agent produced no output" in the summary.
+2. Parse the JSON file:
+   - `"status": "skip"` → include `skip_reason` in summary. No findings for this stack.
+   - `"status": "error"` → include `error` value in summary. No findings for this stack.
+   - `"status": "ok"` → collect `findings` array. Findings are already CP1-escalated by the agent — do NOT re-apply escalation.
+3. Include `coverage_note` from each agent's output as a sub-note under the stack heading in the report.
+
+After collecting all Phase 3 findings, combine with Phase 2 and CP2 findings recorded in the main session.
+
 Read @references/summary-format.md for the report template and fill it in.
+
+Cleanup temp files after the report is complete:
+```bash
+rm -f .claude/save-yourself-audit-*.json
+```
 
 Always end the report with:
 "Note: This scan covers common patterns only. It is not a substitute for a
