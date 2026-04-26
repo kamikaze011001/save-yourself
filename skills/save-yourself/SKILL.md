@@ -19,6 +19,42 @@ Before starting, tell the user: "Running /save-yourself security scan. This will
 check your .env setup, scan for leaked credentials, and audit dependencies. I'll
 narrate each step as I go."
 
+## When NOT to use this skill
+
+- User only wants to check .env: run Phase 2 only, skip Phase 3 entirely.
+- No dependency manifests found (no lockfiles, no package files): skip Phase 3. Tell the user: "No dependency manifests found — running env/credential checks only."
+- Read-only filesystem: warn upfront that CP5/CP6 hook installation will fail.
+
+---
+
+## Flow
+
+```dot
+digraph save_yourself {
+  "Phase 0: Repo visibility"    [shape=box];
+  "Phase 1: Stack detection"    [shape=box];
+  "Phase 2: .env protection"    [shape=box];
+  "CP2: Credential scanner"     [shape=box];
+  "Pre-Phase 3: Tool check"     [shape=box];
+  "Tools missing?"              [shape=diamond];
+  "Offer install"               [shape=box];
+  "Phase 3: Dispatch agents"    [shape=box];
+  "Phase 4: Merge + report"     [shape=box];
+  "CP3-CP6: Opt-in steps"       [shape=box];
+
+  "Phase 0: Repo visibility"  -> "Phase 1: Stack detection";
+  "Phase 1: Stack detection"  -> "Phase 2: .env protection";
+  "Phase 2: .env protection"  -> "CP2: Credential scanner";
+  "CP2: Credential scanner"   -> "Pre-Phase 3: Tool check";
+  "Pre-Phase 3: Tool check"   -> "Tools missing?";
+  "Tools missing?"            -> "Offer install"            [label="yes"];
+  "Tools missing?"            -> "Phase 3: Dispatch agents" [label="no / resolved"];
+  "Offer install"             -> "Phase 3: Dispatch agents";
+  "Phase 3: Dispatch agents"  -> "Phase 4: Merge + report";
+  "Phase 4: Merge + report"   -> "CP3-CP6: Opt-in steps";
+}
+```
+
 ---
 
 ## Phase 0: Repo Visibility
