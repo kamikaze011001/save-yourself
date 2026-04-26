@@ -173,6 +173,11 @@ Never dispatch an agent for a stack marked **skip** — doing so wastes a contex
   - CP2 (credential findings are recorded in the session)
   - Pre-Phase 3 tool check (ready-stack list is finalized)
 
+Ensure the output directory exists before dispatch:
+```bash
+mkdir -p .claude
+```
+
 Narrate: "Dispatching parallel dependency audit agents for: [list ready stacks]..."
 
 For each stack in the **ready** list, construct a dispatch prompt using this template:
@@ -209,12 +214,12 @@ For each stack dispatched in Phase 3, collect its output:
 
 After collecting all Phase 3 findings, combine with Phase 2 and CP2 findings recorded in the main session.
 
-Cleanup temp files:
+Read @references/summary-format.md for the report template and fill it in.
+
+Cleanup temp files after the report is complete:
 ```bash
 rm -f .claude/save-yourself-audit-*.json
 ```
-
-Read @references/summary-format.md for the report template and fill it in.
 
 Always end the report with:
 "Note: This scan covers common patterns only. It is not a substitute for a
